@@ -4,11 +4,11 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from dotenv import load_dotenv
 import os
+import time 
 
 load_dotenv("token.env")
-
-
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
 DATA_PATH = "data/"
 DB_FAISS_PATH = "vectorstore/db_faiss"
 
@@ -27,5 +27,8 @@ def create_vectordb():
     db.save_local(DB_FAISS_PATH)
 
 if __name__ == "__main__":
+    start_time = time.time()
     create_vectordb()
-    print("se ha creado exitosamente la base de datos vectorial")
+    end_time = time.time()  
+    elapsed_time = end_time - start_time  # Calcula la diferencia de tiempo
+    print(f"Se ha creado exitosamente la base de datos vectorial en {elapsed_time:.2f} segundos")
