@@ -24,3 +24,8 @@ def create_vectordb():
     texts = text_splitter.split_documents(documents)
 
     db = FAISS.from_documents(texts,embeddings)
+    db.save_local(DB_FAISS_PATH)
+
+if __name__ == "__main__":
+    create_vectordb()
+    print("se ha creado exitosamente la base de datos vectorial")
