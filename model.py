@@ -1,17 +1,25 @@
-from langchain import PromptTemplate
+#from langchain import PromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA,ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 import chainlit as cl
+from dotenv import load_dotenv
+import os
+import openai
 
+load_dotenv("token.env")
+
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 DB_FAISS_PATH = "vectorstore/db_faiss"
 
 template_bot = """ 
             usa la siguiente pieza de informacion para responder la pregunta de usuario
             si no sabes la respuesta solo di : no tengo ese conocimiento,
             no trates de responderla
-            Context:{}
+            Context:{context}
             Question:{question}
             solo regresa la informacion relevante y nada mas 
 """
@@ -42,33 +50,36 @@ def retrival_qa_chain(llm,prompt,db):
 def qa_bot():
     embeddings = OpenAIEmbeddings()
     db = FAISS.load_local(DB_FAISS_PATH,embeddings)
-    llm = load_llm
-    qa_prompt = retrival_qa_chain(llm,qa_prompt,db)
-
-    return qa_bot
+    llm = load_llm()
+    
+    qa_prompt = custom_prompt()
+    qa = retrival_qa_chain(llm,qa_prompt,db)
+    return qa
 
 def final_result(query):
-    qa_result = qa_bot
+    qa_result = qa_bot()
+
     response = qa_result({'query':query})
     return response
 
 # chainlit
 @cl.on_chat_start
 async def start():
-    chain = qa_bot
+    chain = qa_bot()
     msg = cl.Message(content="Iniciando chat ....")
     await msg.send()
-    msg.content = "Hzme una pregunta "
+    msg.content = "Bienvenido, Hazme una pregunta "
     await msg.update()
+
     cl.user_session.set("chain",chain)
 
     @cl.on_message
     async def main(message):
-        chain = cl.user_session.set("chain")
+        chain = cl.user_session.get("chain")
         cb = cl.AsyncLangchainCallbackHandler(
             stream_final_answer=True,answer_prefix_tokens=["FINAL","ANSWER"]
         )
-        cb.answer_reachedTrue
+        cb.answer_reached = True
         res = await chain.acall(message,callbacks=[cb])
         answer = res["result"]
         sources = res["source_documents"]
