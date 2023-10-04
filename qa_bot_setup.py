@@ -32,7 +32,7 @@ def custom_prompt():
 
 def load_llm():
     llm  = ChatOpenAI(
-        max_tokens=500,
+        max_tokens=1000,
         temperature=0.5
         )
     return llm
